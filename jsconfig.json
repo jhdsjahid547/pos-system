@@ -1,0 +1,15 @@
+{
+    "exclude": [
+        "./node_modules",
+        "public"
+    ],
+    "compilerOptions": {
+        "baseUrl": "./",
+        "jsx": "preserve",
+        "paths": {
+            "@/*": [
+                "./resources/js/*"
+            ]
+        }
+    }
+}

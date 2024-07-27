@@ -1,0 +1,29 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "lint": "eslint --ext .js,.vue --ignore-path .gitignore --fix resources/js",
+        "format": "prettier .  --write"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^5.0.5",
+        "axios": "^1.6.4",
+        "laravel-vite-plugin": "^1.0",
+        "lodash": "^4.17.21",
+        "pinia": "^2.1.7",
+        "sass": "^1.77.8",
+        "vite": "^5.0",
+        "vite-plugin-vuetify": "^2.0.3",
+        "vue-cli-plugin-vuetify": "^2.5.8",
+        "vuetify": "^3.6.10"
+    },
+    "dependencies": {
+        "@inertiajs/vue3": "^1.2.0",
+        "nprogress": "^0.2.0",
+        "vue": "^3.4.31",
+        "vue-tabler-icons": "^2.21.0",
+        "vue3-perfect-scrollbar": "^2.0.0"
+    }
+}
