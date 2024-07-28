@@ -1,5 +1,4 @@
 <script setup>
-import { CheckIcon } from 'vue-tabler-icons';
 const props = defineProps({
     form: Object,
     categories: Array,
@@ -30,7 +29,12 @@ const formSave = () => emit('formSave');
                 </v-col>
 
                 <v-col cols="12" md="6" sm="6">
-                    <v-text-field v-model.number="form.barcode" type="number" label="Barcode" variant="outlined" required></v-text-field>
+                    <v-text-field v-model.number="form.barcode" type="number" label="Barcode" variant="outlined">
+                        <template v-slot:append-inner>
+                            <v-btn color="lightsecondary" variant="flat" class="text-secondary">Generaten</v-btn>
+                        </template>
+                    </v-text-field>
+<!--                    <v-text-field v-model.number="form.barcode" type="number" label="Barcode" variant="outlined" required></v-text-field>-->
                 </v-col>
 
                 <v-col cols="12" md="6" sm="6">
