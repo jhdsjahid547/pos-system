@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useForm, router } from "@inertiajs/vue3";
 import { useFlashStore } from "@/stores/flash.js";
-import {EditIcon, CircleCheckFilledIcon, SquareRoundedXIcon, TrashIcon } from 'vue-tabler-icons';
+import { EditIcon, CircleCheckFilledIcon, SquareRoundedXIcon, TrashIcon } from 'vue-tabler-icons';
 
 const flash = useFlashStore();
 const props = defineProps({
@@ -101,7 +101,7 @@ const remove = () => {
 
 <style scoped>
 [contenteditable] {
-    outline: 0px solid transparent;
+    outline: 0 solid transparent;
 }
 .set-width-name {
     width: 250px;

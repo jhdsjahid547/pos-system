@@ -5,7 +5,8 @@ import {
     KeyIcon,
     BugIcon,
     DashboardIcon,
-    ListIcon
+    ListIcon,
+    ShoppingCartIcon,
 } from 'vue-tabler-icons'
 export const sidebarItem = [
     { header: 'Admin Panel' },
@@ -18,6 +19,11 @@ export const sidebarItem = [
         title: 'Category',
         icon: ListIcon,
         name: 'categories.index'
+    },
+    {
+        title: 'Product',
+        icon: ShoppingCartIcon,
+        name: 'products.index'
     },
     {
         title: 'Authentication',

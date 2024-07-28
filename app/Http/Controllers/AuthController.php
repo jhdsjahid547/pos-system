@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -12,9 +13,20 @@ class AuthController extends Controller
     {
         return inertia('Auth/ChangePassword');
     }
-    public function update()
+    public function update(Request $request)
     {
-        return back()->with('success', 'Logic not implemented yet!');
+        $request->validate([
+            'current_password' => 'required|current_password',
+            'password' => 'required|min:8|confirmed|different:current_password',
+            'password_confirmation' => 'required',
+        ],
+        [
+            'password.different' => 'The old password field & new password cant be same.',
+        ]);
+        $user = Auth::user();
+        $user->password = Hash::make($request->password);
+        $user->save();
+        return back()->with('success', 'Password Changed!');
     }
 
     public function create()

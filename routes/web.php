@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IndexController;
+use App\Http\Controllers\ProductController;
 
 
 Route::get('/error', [IndexController::class, 'index'])->name('error');
@@ -21,5 +22,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/change-password', [AuthController::class, 'index'])->name('change.password');
     Route::patch('/change-password', [AuthController::class, 'update'])->name('update.password');
     Route::resource('categories', CategoryController::class)->except(['create', 'show', 'edit']);
+    Route::resource('products', ProductController::class);
 });
 
