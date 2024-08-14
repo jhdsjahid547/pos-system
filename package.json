@@ -20,10 +20,14 @@
         "vuetify": "^3.6.10"
     },
     "dependencies": {
+        "@chenfengyuan/vue-barcode": "^2.0.2",
         "@inertiajs/vue3": "^1.2.0",
+        "jsbarcode": "^3.11.6",
         "nprogress": "^0.2.0",
         "vue": "^3.4.31",
+        "vue-html-to-paper": "^2.0.3",
         "vue-tabler-icons": "^2.21.0",
-        "vue3-perfect-scrollbar": "^2.0.0"
+        "vue3-perfect-scrollbar": "^2.0.0",
+        "vue3-print-nb": "^0.1.4"
     }
 }

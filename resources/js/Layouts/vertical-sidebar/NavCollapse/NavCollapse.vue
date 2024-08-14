@@ -23,7 +23,6 @@ const setActive = (routeName) => {
             @click="setActive(item.name)"
             :title="item.title" :class="{ 'bg-purple-lighten-4 text-secondary': active }"
             rounded
-            class="mb-1"
         >
             <template v-slot:prepend>
                 <Icon :item="item.icon" :level="level" />

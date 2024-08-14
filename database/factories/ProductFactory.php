@@ -20,7 +20,7 @@ class ProductFactory extends Factory
         return [
             'user_id' => 1,
             'category_id' => CategoryFactory::new(),
-            'barcode' => fake()->unique()->ean8(),
+            'barcode' => fake()->unique()->ean13(),
             'name' => fake()->firstName(),
             'description' => fake()->sentence(),
             'stock' => fake()->numberBetween(1, 10),

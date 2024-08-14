@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->foreignIdFor(User::class,'user_id')->constrained('users');
             $table->foreignIdFor(Category::class,'category_id')->constrained('categories');
-            $table->unsignedInteger('barcode');
+            $table->unsignedBigInteger('barcode');
             $table->text('name');
             $table->text('description')->nullable();
             $table->unsignedInteger('stock')->nullable();

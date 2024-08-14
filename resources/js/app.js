@@ -6,8 +6,9 @@ import { createVuetify } from 'vuetify'
 import 'vuetify/styles'
 import '@/scss/style.scss'
 import { PerfectScrollbarPlugin } from 'vue3-perfect-scrollbar'
+import print from 'vue3-print-nb'
 import MainLayout from '@/Layouts/MainLayout.vue'
-import  PurpleTheme from '@/UI/LightTheme.js';
+import PurpleTheme from '@/UI/LightTheme.js'
 
 const vuetify = createVuetify({
     theme: {
@@ -43,6 +44,7 @@ createInertiaApp({
 	  .use(PerfectScrollbarPlugin)
 	  .use(createPinia())
       .use(vuetify)
+      .use(print)
       .mount(el)
   },
 })
