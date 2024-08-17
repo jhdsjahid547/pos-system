@@ -14,9 +14,20 @@ class Invoice extends Model
     public static function createInvoice($input)
     {
         self::$invoice = new Invoice();
+        return self::extracted($input);
+    }
+    public static function updateInvoice($input, $id)
+    {
+        self::$invoice = Invoice::find($id);
+        return self::extracted($input);
+    }
+    public static function extracted($input)
+    {
         self::$invoice->subtotal = $input['subtotal'];
         self::$invoice->discount = $input['discount'];
+        self::$invoice->discount_percent = $input['discount_percent'];
         self::$invoice->vat = $input['vat'];
+        self::$invoice->vat_percent = $input['vat_percent'];
         self::$invoice->total = $input['total'];
         self::$invoice->due = $input['due'];
         self::$invoice->paid = $input['paid'];

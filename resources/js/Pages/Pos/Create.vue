@@ -1,11 +1,14 @@
 <script setup>
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, onMounted, onUnmounted } from 'vue';
 import { router } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
 import { BarcodeIcon, TrashIcon } from 'vue-tabler-icons';
 import { useFlashStore } from "@/stores/flash";
 import { usePosStore } from '@/stores/pos';
 import TableData from '@/Pages/Pos/Component/TableData.vue';
+//import VueBarcode from "@chenfengyuan/vue-barcode";
+import { jsPDF } from "jspdf";
+import html2canvas from 'html2canvas';
 
 const props = defineProps({
     product: Array,
@@ -15,6 +18,34 @@ const props = defineProps({
 //Fetch product using bar code scanner
 const flash = useFlashStore();
 const pos = usePosStore();
+
+const posClear = () => {
+    pos.products = [];
+    searchProduct.value = null;
+    loadProduct.value = [];
+}
+onUnmounted(() => {
+    if (pos.invoice.id) {
+            pos.invoice.id = null;
+            pos.invoice.subtotal = null;
+            pos.invoice.discount_percent = null;
+            pos.invoice.discount = null;
+            pos.invoice.vat_percent = null;
+            pos.invoice.vat = null;
+            pos.invoice.total = null;
+            pos.invoice.due = null;
+            pos.invoice.paid = null;
+            pos.invoice.payment_type = null;
+    }
+    posClear();
+});
+onMounted(() => {
+    if (!pos.invoice.id) {
+        order.discount_percent = props.taxDiscount.discount;
+        order.payment_type = 'Cash';
+        order.paid = null;
+    }
+});
 const addCart = (product) => {
     pos.products.push({
         ...product,
@@ -64,32 +95,69 @@ watch(() => props.productList, (newValue) => {
 const subTotal = computed(() => pos.products.reduce((sum, item) => sum + item.sub_total, 0));
 const order = reactive({
     subtotal: subTotal,
-    vatPercent: props.taxDiscount.vat,
-    vat: computed(() => (order.vatPercent / 100 * subTotal.value).toFixed(2)),
-    discountPercent: props.taxDiscount.discount,
-    discount: computed(() => (order.discountPercent / 100 * subTotal.value).toFixed(2)),
+    vat_percent: computed(() => pos.invoice.vat_percent ? pos.invoice.vat_percent : props.taxDiscount.vat),
+    vat: computed(() => (order.vat_percent / 100 * subTotal.value).toFixed(2)),
+    discount_percent: pos.invoice.discount_percent ? pos.invoice.discount_percent : props.taxDiscount.discount,
+    discount: computed(() => (order.discount_percent / 100 * subTotal.value).toFixed(2)),
     total: computed(() => (Number(order.subtotal) + Number(order.vat) - order.discount).toFixed(2)),
-    paid: null,
+    paid: pos.invoice.paid ? pos.invoice.paid : null,
     due: computed(() => (order.total - order.paid).toFixed(2)),
-    payment_type: 'Cash',
+    payment_type: pos.invoice.payment_type ? pos.invoice.payment_type : 'Cash',
     products: computed(() => pos.products.map(item => ({ product_id: item.id, quantity: item.quantity }))),
-    products_stock: computed(() => pos.products.map(item => ({ id: item.id, stock: item.stock - item.quantity }))),
+    products_stock: computed(() => pos.products.map(item => ({ id: item.id, stock: pos.invoice.id ? (item.stock + item.still_quantity) - item.quantity : item.stock - item.quantity }))),
 });
 //Save Order
 const errors = reactive({ paid: null });
 const saveOrder = () => {
     if (pos.products.length) {
-        router.post(route('orders.store'), order, {
-            onSuccess: () => {
-                pos.products = [];
-                searchProduct.value = null;
-                loadProduct.value = [];
-                flash.snackbar = true;
-            },
-            onError: error => errors.paid = error.paid
-        });
+        if (pos.invoice.id) {
+            router.put(route('orders.update', { order: pos.invoice.id }), order, {
+                onSuccess: () => {
+                    flash.snackbar = true;
+                },
+                onError: error => errors.paid = error.paid
+            });
+        } else {
+            router.post(route('orders.store'), order, {
+                onSuccess: () => {
+                    posClear();
+                    flash.snackbar = true;
+                },
+                onError: error => errors.paid = error.paid
+            });
+        }
     } else {
         alert('Atleast one product order!');
+    }
+}
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+const receiptContent = ref();
+const generatePDF = async () => {
+    const receipt = receiptContent.value;
+    html2canvas(receipt).then(canvas => {
+        const contentHeightPx = receipt.offsetHeight;
+        // Convert the height from pixels to mm (1px = 0.264583mm)
+        const contentHeightMm = contentHeightPx * 0.264583;
+        const imgData = canvas.toDataURL('image/png');
+        const doc = new jsPDF('p', 'mm', [80, contentHeightMm]); //manually 297
+        doc.addImage(imgData, 'PNG', 0, 0);
+        //window.open(doc.output('bloburl'), '_blank').print();
+        //window.open(doc.output('bloburl'), '_blank');
+        doc.save('invoice-id.pdf');
+        /*const string = doc.output('bloburl');
+        window.open(string); */
+        //doc.save('custom_size.pdf');
+    });
+}
+const printObj = {
+    id: "printMe",
+    extraHead: '<meta http-equiv="Content-Language" content="bn-bd"/>',
+    openCallback () {
+        console.log('opened');
+    },
+    closeCallback () {
+        console.log('closed');
     }
 }
 </script>
@@ -163,7 +231,7 @@ const saveOrder = () => {
                 <template v-slot:prepend-inner>SUBTOTAL:</template>
                 <template v-slot:append-inner>Taka</template>
             </v-text-field>
-            <v-text-field v-model.number="order.discountPercent" type="number" density="compact" variant="outlined" hide-details bg-color="white">
+            <v-text-field v-model.number="order.discount_percent" type="number" density="compact" variant="outlined" hide-details bg-color="white">
                 <template v-slot:prepend-inner>DISCOUNT(%):</template>
                 <template v-slot:append-inner>%</template>
             </v-text-field>
@@ -171,7 +239,7 @@ const saveOrder = () => {
                 <template v-slot:prepend-inner>DISCOUNT:</template>
                 <template v-slot:append-inner>Taka</template>
             </v-text-field>
-            <v-text-field :value="order.vatPercent" density="compact" variant="outlined" hide-details readonly>
+            <v-text-field :value="order.vat_percent" density="compact" variant="outlined" hide-details readonly>
                 <template v-slot:prepend-inner>VAT(%):</template>
                 <template v-slot:append-inner>%</template>
             </v-text-field>
@@ -215,11 +283,86 @@ const saveOrder = () => {
             <v-btn variant="outlined" color="secondary" class="mt-2 justify-end" @click="saveOrder">Save Order</v-btn>
         </v-col>
     </v-row>
+    <div id="printMe" class="printableArea">
+        <div class="receipt" ref="receiptContent">
+            <h2 class="text-center border-thin">JAHID INC</h2>
+            <p>PHONE NUMBER : 01890-205858<br>WEBSITE : WWW.EXAMPLE.COM</p>
+            <p>Bill No: 01<br>Date: 2024-08-15</p>
+            <table class="print-table">
+                <thead>
+                <tr>
+                    <th>PRODUCT</th>
+                    <th>QTY</th>
+                    <th>PRC</th>
+                    <th>TOTAL</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="product in pos.products" :key="product.id">
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.quantity }}</td>
+                    <td>{{ product.sell_price }}</td>
+                    <td>{{ product.sell_price * product.quantity }}</td>
+                </tr>
+                <tr><td colspan="3">SUBTOTAL (Rs)</td><td>{{ order.subtotal }}</td></tr>
+                <tr><td colspan="3">DISCOUNT</td><td>{{ order.discount_percent }}</td></tr>
+                <tr><td colspan="3">DISCOUNT (Rs)</td><td>{{ order.discount }}</td></tr>
+                <tr><td colspan="3">VAT</td><td>{{ order.vat_percent }}</td></tr>
+                <tr><td colspan="3">VAT (Tk)</td><td>{{ order.vat }}</td></tr>
+                <tr><td colspan="3">G-TOTAL (Tk)</td><td>{{ order.total }}</td></tr>
+                <tr><td colspan="3">PAID (Tk)</td><td>{{ order.paid }}</td></tr>
+                <tr><td colspan="3">DUE (Tk)</td><td>{{ order.due }}</td></tr>
+                </tbody>
+            </table>
+            <div class="print-footer">
+                <p>Important Notice:</p>
+                <p>No Product Will Be Replaced Or Refunded If You Dont Have Bill With You</p>
+                <p>You Can Refund Within 2 Days Of Purchase</p>
+            </div>
+            <br/>
+        </div>
+    </div>
+    <v-btn @click="generatePDF">Save PDF</v-btn>
+<!--<div class="d-flex justify-center">
+        <div>
+            In center element put content here(inside this div).
+            and add parent div print id
+        </div>
+    </div>-->
+    <v-btn v-print="printObj">Print</v-btn>
 </template>
 
 <style lang="css" scoped>
 #cash, #card, #check {
     width: 15px;
     height: 15px;
+}
+.printableArea {
+    width: 80mm;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+.receipt {
+    padding: 10px;
+    border: 1px solid #000;
+}
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.print-table th, .print-table td {
+    padding: 5px;
+    text-align: center;
+}
+.print-table, .print-table th, .print-table td {
+    border: 1px solid black;
+}
+.print-footer {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 12px;
+}
+@page {
+    margin: 0;
 }
 </style>

@@ -22,7 +22,9 @@
     "dependencies": {
         "@chenfengyuan/vue-barcode": "^2.0.2",
         "@inertiajs/vue3": "^1.2.0",
+        "html2canvas": "^1.4.1",
         "jsbarcode": "^3.11.6",
+        "jspdf": "^2.5.1",
         "nprogress": "^0.2.0",
         "vue": "^3.4.31",
         "vue-html-to-paper": "^2.0.3",

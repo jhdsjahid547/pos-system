@@ -3,24 +3,26 @@ import { ref, watch } from 'vue';
 import { router } from "@inertiajs/vue3";
 import { VDateInput } from 'vuetify/labs/VDateInput';
 import { useDate } from 'vuetify';
-import { 
+import {
     DetailsIcon,
     EditIcon,
     TrashIcon,
-    ChevronLeftIcon, 
-    ChevronRightIcon, 
-    ChevronsRightIcon, 
-    ChevronsLeftIcon, 
+    ChevronLeftIcon,
+    ChevronRightIcon,
+    ChevronsRightIcon,
+    ChevronsLeftIcon,
 } from "vue-tabler-icons";
 import FakeAPI from "@/stores/invoice.js";
 import { useFlashStore } from "@/stores/flash";
 import BaseItemBar from "@/Components/BaseItemBar.vue";
 import { usePosStore } from '@/stores/pos';
 import DetailsModal from '@/Pages/Pos/Component/DetailsModal.vue';
+import { useActivityStore } from "@/stores/activity.js";
 
 const props = defineProps({
     invoices: Array
 });
+const activityStore = useActivityStore()
 const flash = useFlashStore();
 const date = useDate();
 const pos = usePosStore();
@@ -65,20 +67,24 @@ const viewProducts = item => {
     pos.detailsModal = true;
 }
 //Edit Order
-const editOrder = async products => {
-    pos.invoiceId = products[0].invoice_id;
+const editOrder = async (invoice, products) => {
+    const { id, subtotal, discount_percent, discount, vat_percent, vat, total, due, paid, payment_type } = invoice;
+    pos.invoice = { id, subtotal, discount_percent, discount, vat_percent, vat, total, due, paid, payment_type };
     pos.products = await products.map(item => {
         return {
             id: item.product.id,
             name: item.product.name,
             stock: item.product.stock,
             sell_price: item.product.sell_price,
+            still_quantity: item.quantity,
             quantity: item.quantity,
             sub_total: item.product.sell_price * item.quantity
         };
     })
     if (pos.products) {
-        router.get(route('orders.create'));
+        router.visit(route('orders.create'), {
+            onSuccess: () => activityStore.setRouteName({ active: 'orders.create' })
+        });
     }
 }
 //Delete item
@@ -96,7 +102,6 @@ const deleteItem = id => {
 </script>
 
 <template>
-    {{ pos.invoiceId }}
     <BaseItemBar>
         <v-date-input
             v-model="dateRange"
@@ -109,12 +114,12 @@ const deleteItem = id => {
             hide-details
         ></v-date-input>
         <template #end>
-            <v-text-field 
+            <v-text-field
                 max-width="200"
-                v-model="orderId" 
-                variant="outlined" 
-                density="compact" 
-                placeholder="Invoice Number" 
+                v-model="orderId"
+                variant="outlined"
+                density="compact"
+                placeholder="Invoice Number"
                 hide-details
             ></v-text-field>
         </template>
@@ -154,7 +159,7 @@ const deleteItem = id => {
             </v-tooltip>
             <v-tooltip text="Edit" location="bottom">
                 <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" @click="editOrder(item.products)" variant="outlined" color="warning" density="comfortable">
+                    <v-btn v-bind="props" @click="editOrder(item, item.products)" variant="outlined" color="warning" density="comfortable">
                         <EditIcon stroke-width="1.5" size="22" />
                     </v-btn>
                 </template>

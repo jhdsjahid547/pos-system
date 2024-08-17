@@ -9,9 +9,8 @@ const pos = usePosStore();
 const quantity = ref(props.product.quantity);
 const subTotal = computed(() => props.product.sell_price * quantity.value);
 const addPrice = () => {
-    console.log(quantity.value);
     if (quantity.value > props.product.stock) {
-        quantity.value -= 1; 
+        quantity.value -= 1;
         alert('Out of stock!');
     }
     if (quantity.value === 0) {
@@ -27,7 +26,7 @@ const addPrice = () => {
 // const subTotal = computed(() => props.product.sell_price * quantity.value);
 // const addPrice = () => {
 //     if (quantity.value > props.product.stock) {
-//         quantity.value -= 1; 
+//         quantity.value -= 1;
 //         alert('Out of stock!');
 //     }
 //     if (quantity.value === 0) {
@@ -50,7 +49,7 @@ const addPrice = () => {
             v-model.number="quantity"
             @input="addPrice"
             type="number"
-            density="compact" 
+            density="compact"
             variant="outlined"
             max-width="70"
             hide-details

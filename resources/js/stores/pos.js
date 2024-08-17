@@ -6,7 +6,18 @@ export const usePosStore = defineStore({
     state: () => ({
         products: [],
         detailsModal: false,
-        invoiceId: null
+        invoice: {
+            id: null,
+            subtotal: null,
+            discount_percent: null,
+            discount: null,
+            vat_percent: null,
+            vat: null,
+            total: null,
+            due: null,
+            paid: null,
+            payment_type: null
+        }
     }),
     getters: {
         subTotal(state) {

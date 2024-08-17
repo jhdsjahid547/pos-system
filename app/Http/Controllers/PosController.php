@@ -48,25 +48,13 @@ class PosController extends Controller
     public function store(Request $request)
     {
         //Add validation
-        $input = $request->except(['vatPercent', 'discountPercent']);
+        //$input = $request->except(['vatPercent', 'discountPercent']);
+        $input = $request->all();
         $request->validate(['paid' => 'required']);
         $invoiceId = Invoice::createInvoice($input);
         if ($invoiceId) {
-        //Reduce stock quantity from products
-        $ids = [];
-        $cases = [];
-        $params = [];
-        foreach ($input['products_stock'] as $product) {
-            $ids[] = $product['id'];
-            $cases[] = "WHEN {$product['id']} THEN ?";
-            $params[] = $product['stock'];
-        }
-        $ids = implode(',', $ids);
-        $cases = implode(' ', $cases);
-        //Use this method instead of foreach direct query beacause performance
-        $sql = "UPDATE products SET stock = CASE id {$cases} END WHERE id IN ({$ids})";
-        DB::update($sql, $params);
-        //Add this to invoice_details table
+            $this->reduceStockQuantityFromProducts($input['products_stock']);
+            //Add this to invoice_details table
         $products = $input['products'];
         $products = array_map(function($product) use ($invoiceId) {
             $product['invoice_id'] = $invoiceId;
@@ -82,27 +70,29 @@ class PosController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
     {
-        //
+        $input = $request->all();
+        $request->validate(['paid' => 'required']);
+        $invoiceId = Invoice::updateInvoice($input, $id);
+        if ($invoiceId) {
+            $this->reduceStockQuantityFromProducts($input['products_stock']);
+            $cases = [];
+            $product_ids = [];
+            foreach ($input['products'] as $product) {
+                $product_id = $product['product_id'];
+                $quantity = $product['quantity'];
+                $cases[] = "WHEN product_id = {$product_id} AND invoice_id = {$id} THEN {$quantity}";
+                $product_ids[] = $product_id;
+            }
+            $cases = implode(' ', $cases);
+            $product_ids = implode(',', $product_ids);
+            $sql = "UPDATE invoice_details SET quantity = CASE {$cases} END WHERE product_id IN ({$product_ids}) AND invoice_id = {$id}";
+            DB::statement($sql);
+        }
+        return back()->with('success', 'Invoice Updated!');
     }
 
     /**
@@ -113,5 +103,26 @@ class PosController extends Controller
         $invoice = Invoice::find($id);
         $invoice->delete();
         return back()->with('success', 'Invoice Deleted!');
+    }
+
+    /**
+     * @param $products_stock
+     * @return void
+     */
+    public function reduceStockQuantityFromProducts($products_stock): void
+    {
+        $ids = [];
+        $cases = [];
+        $params = [];
+        foreach ($products_stock as $product) {
+            $ids[] = $product['id'];
+            $cases[] = "WHEN {$product['id']} THEN ?";
+            $params[] = $product['stock'];
+        }
+        $ids = implode(',', $ids);
+        $cases = implode(' ', $cases);
+        //Use this method instead of foreach direct query beacause performance
+        $sql = "UPDATE products SET stock = CASE id {$cases} END WHERE id IN ({$ids})";
+        DB::update($sql, $params);
     }
 }

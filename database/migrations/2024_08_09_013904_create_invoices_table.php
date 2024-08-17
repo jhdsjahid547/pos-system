@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
             $table->decimal('subtotal');
-            $table->decimal('discount');
+            $table->decimal('discount_percent')->nullable();
+            $table->decimal('discount')->nullable();
+            $table->decimal('vat_percent');
             $table->decimal('vat');
             $table->decimal('total');
             $table->decimal('due');

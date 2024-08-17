@@ -272,7 +272,7 @@ const formSave = () => {
             <v-data-table-footer :nextIcon="ChevronRightIcon"></v-data-table-footer>
         </template> -->
     </v-data-table-server>
-    <div v-if="productForm.printDailog" id="printMe" style="background:red;" class="print-only">
+    <div v-if="productForm.printDailog" id="printMe" class="print-only">
         <v-row>
             <v-col
             cols="2"
